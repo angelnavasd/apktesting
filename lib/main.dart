@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Configurar la orientación de la aplicación
@@ -19,6 +20,11 @@ void main() {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
+  );
+  
+  await Supabase.initialize(
+    url: 'https://clmrkqhvpyqcpghqhlbg.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsbXJrcWh2cHlxY3BnaHFobGJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwMDA3MjEsImV4cCI6MjA2MDU3NjcyMX0.RDt0SZ9f_3fFFN2q6tjJJq0LV7nGEGmJVi3uHK_CXqg',
   );
   
   runApp(const MyApp());

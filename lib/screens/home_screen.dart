@@ -5,6 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
+import 'dart:typed_data';
 import '../utils/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/camera_frame.dart';
@@ -24,6 +27,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   bool _isCameraInitialized = false;
   late AnimationController _scanAnimationController;
   late Animation<double> _scanAnimation;
+
+  // Variables de estado para debug visual
+  String? _capturedFileName;
+  int? _capturedFileSize;
+  String? _uploadStatus;
+  int _retryCount = 0;
 
   @override
   void initState() {
@@ -97,37 +106,87 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
 
     try {
-      // Mostrar efecto de flash
-      setState(() {});
-      
+      setState(() {
+        _capturedFileName = null;
+        _capturedFileSize = null;
+        _uploadStatus = 'Capturando...';
+        _retryCount = 0;
+      });
+
       final XFile image = await _cameraController!.takePicture();
-      
-      // Aquí puedes procesar la imagen capturada
       if (!mounted) return;
+      final bytes = await image.readAsBytes();
+      final fileName = image.name;
+      final safeFileName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      setState(() {
+        _capturedFileName = safeFileName;
+        _capturedFileSize = bytes.length;
+        _uploadStatus = 'Subiendo...';
+      });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Imagen capturada correctamente',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppTheme.primaryColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: EdgeInsets.all(12),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      // Intentar subir con reintentos
+      await _uploadWithRetry(safeFileName, bytes);
     } catch (e) {
-      print('Error al capturar imagen: $e');
+      setState(() {
+        _uploadStatus = 'Error capturando imagen: $e';
+      });
+    }
+  }
+  
+  // Método para subir con reintentos
+  Future<void> _uploadWithRetry(String fileName, Uint8List bytes) async {
+    const maxRetries = 3;
+    _retryCount = 0;
+    
+    while (_retryCount < maxRetries) {
+      try {
+        // Verificar conectividad antes de intentar subir
+        bool hasConnection = await _checkInternetConnection();
+        if (!hasConnection) {
+          setState(() {
+            _uploadStatus = 'Sin conexión a Internet. Reintentando (${_retryCount + 1}/$maxRetries)...';
+          });
+          await Future.delayed(Duration(seconds: 2));
+          _retryCount++;
+          continue;
+        }
+        
+        setState(() {
+          _uploadStatus = 'Subiendo... Intento ${_retryCount + 1}/$maxRetries';
+        });
+        
+        final String fullPath = await Supabase.instance.client.storage
+            .from('gym-images')
+            .uploadBinary(fileName, bytes);
+        
+        setState(() {
+          _uploadStatus = 'Subido correctamente: $fullPath';
+        });
+        return; // Éxito, salir del bucle
+      } catch (e) {
+        _retryCount++;
+        if (_retryCount >= maxRetries) {
+          setState(() {
+            _uploadStatus = 'Error después de $maxRetries intentos: $e';
+          });
+        } else {
+          setState(() {
+            _uploadStatus = 'Error subiendo imagen. Reintentando (${_retryCount}/$maxRetries): $e';
+          });
+          await Future.delayed(Duration(seconds: 2)); // Esperar antes de reintentar
+        }
+      }
+    }
+  }
+  
+  // Verificar conexión a Internet
+  Future<bool> _checkInternetConnection() async {
+    try {
+      // Intentar una conexión a un servidor conocido
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } on SocketException catch (_) {
+      return false;
     }
   }
 
@@ -194,83 +253,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       
       body: Column(
         children: [
-          SizedBox(height: 20.h),
-          
-          // Área de la cámara (cuadrada)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculamos el tamaño para que sea cuadrado
-              final size = constraints.maxWidth * 0.85;
-              return Center(
-                child: CameraFrame(
-                  size: size,
-                  isInitialized: _isCameraInitialized,
-                  onPermissionRequest: _requestCameraPermission,
-                  child: _buildCameraPreview(),
-                ),
-              );
-            }
+          SizedBox(height: 16),
+          Expanded(
+            child: _buildCameraPreview(),
           ),
-          
-          // Espacio entre la cámara y el texto
-          SizedBox(height: 32.h),
-          
-          // Texto instructivo con diseño moderno
-          GlassmorphicContainer(
-            width: 0.9.sw,
-            height: 80.h,
-            borderRadius: 20,
-            blur: 10,
-            alignment: Alignment.center,
-            border: 1.5,
-            linearGradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.1),
+          // DEBUG: Mostrar info del archivo capturado/subido
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Archivo capturado:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Nombre: ${_capturedFileName ?? "-"}'),
+                Text('Tamaño: ${_capturedFileSize != null ? _capturedFileSize.toString() + ' bytes' : "-"}'),
+                Text('Estado: ${_uploadStatus ?? "-"}'),
               ],
             ),
-            borderGradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor.withOpacity(0.3),
-                AppTheme.secondaryColor.withOpacity(0.3),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: FaIcon(
-                      FontAwesomeIcons.circleInfo,
-                      color: AppTheme.primaryColor,
-                      size: 20.r,
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Text(
-                      'Escanea cualquier equipamento de tu gimnasio para identificar qué músculo trabajas.',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppTheme.darkColor.withOpacity(0.8),
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-          
           // Espacio expandible para empujar la barra inferior hacia abajo
           const Spacer(),
         ],

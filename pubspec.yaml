@@ -34,6 +34,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.8.4  # Versión actualizada que soporta sign_in_with_apple más reciente
+  file_picker: ^8.1.2
+  sign_in_with_apple: ^7.0.1  # Versión actualizada compatible con Flutter 3.x/4.x
   
   # Para acceso a la cámara
   camera: ^0.10.5+9
