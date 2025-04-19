@@ -159,6 +159,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             .from('gym-images')
             .uploadBinary(fileName, bytes);
         
+        // Insertar en la tabla gym_images
+        await Supabase.instance.client
+            .from('gym_images')
+            .insert({
+              'image_url': fullPath,
+              'file_name': fileName,
+              'device_info': 'Flutter App',
+            });
+            
         setState(() {
           _uploadStatus = 'Subido correctamente: $fullPath';
         });
