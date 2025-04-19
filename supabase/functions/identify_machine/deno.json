@@ -1,0 +1,17 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-env --allow-read index.ts"
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window", "deno.ns"],
+    "strict": false
+  },
+  "importMap": "./import_map.json",
+  "lint": {
+    "include": ["*.ts"]
+  },
+  "fmt": {
+    "include": ["*.ts"]
+  }
+}

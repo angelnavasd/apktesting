@@ -33,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int? _capturedFileSize;
   String? _uploadStatus;
   int _retryCount = 0;
+  Map<String, dynamic>? _machineAnalysis;
 
   @override
   void initState() {
@@ -160,14 +161,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             .uploadBinary(fileName, bytes);
         
         // Insertar en la tabla gym_images
-        await Supabase.instance.client
+        final response = await Supabase.instance.client
             .from('gym_images')
             .insert({
               'image_url': fullPath,
               'file_name': fileName,
               'device_info': 'Flutter App',
-            });
+            })
+            .select()
+            .single();
             
+        final String imageId = response['id'];
+        
+        setState(() {
+          _uploadStatus = 'Subido correctamente. Analizando imagen...';
+        });
+        
+        // Llamar a la Edge Function para analizar la imagen
+        await _analyzeImage(imageId, fileName);
+        
         setState(() {
           _uploadStatus = 'Subido correctamente: $fullPath';
         });
@@ -196,6 +208,34 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       return false;
+    }
+  }
+
+  // Método para analizar la imagen con la Edge Function
+  Future<void> _analyzeImage(String imageId, String fileName) async {
+    try {
+      final response = await Supabase.instance.client
+          .functions
+          .invoke('identify_machine', 
+            body: {
+              'image_id': imageId,
+            }
+          );
+      
+      if (response.status == 200) {
+        setState(() {
+          _machineAnalysis = response.data['analysis'];
+          _uploadStatus = 'Imagen analizada correctamente';
+        });
+      } else {
+        setState(() {
+          _uploadStatus = 'Error al analizar la imagen: ${response.error?.message}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _uploadStatus = 'Error al analizar la imagen: $e';
+      });
     }
   }
 
@@ -276,6 +316,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text('Nombre: ${_capturedFileName ?? "-"}'),
                 Text('Tamaño: ${_capturedFileSize != null ? _capturedFileSize.toString() + ' bytes' : "-"}'),
                 Text('Estado: ${_uploadStatus ?? "-"}'),
+                
+                // Mostrar análisis de la máquina si está disponible
+                if (_machineAnalysis != null) ...[
+                  SizedBox(height: 10),
+                  Text('Máquina identificada:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Nombre: ${_machineAnalysis!['machine_name'] ?? "Desconocido"}'),
+                  Text('Músculos principales: ${_machineAnalysis!['primary_muscles']?.join(", ") ?? "-"}'),
+                  Text('Músculos secundarios: ${_machineAnalysis!['secondary_muscles']?.join(", ") ?? "-"}'),
+                ],
               ],
             ),
           ),
