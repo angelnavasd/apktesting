@@ -95,7 +95,7 @@ async function analyzeImageWithGemini(imageBase64: string): Promise<AnalysisResu
         {
           parts: [
             {
-              text: "Identifica esta máquina de gimnasio. Proporciona la siguiente información en formato JSON: 1) nombre de la máquina, 2) músculos principales que trabaja, 3) músculos secundarios, 4) instrucciones básicas de uso. Responde SOLO con el JSON, sin texto adicional."
+              text: "Identifica esta máquina de gimnasio. Proporciona la siguiente información en formato JSON: 1) nombre_de_la_máquina, 2) músculos_principales como array, 3) músculos_secundarios como array, 4) instrucciones_básicas_de_uso como array. Responde SOLO con el JSON, sin texto adicional."
             },
             {
               inline_data: {
@@ -117,8 +117,21 @@ async function analyzeImageWithGemini(imageBase64: string): Promise<AnalysisResu
   
   try {
     // Extraer el JSON de la respuesta de texto
-    const content = result.candidates[0].content.parts[0].text;
-    return JSON.parse(content);
+    const textContent = result.candidates[0].content.parts[0].text;
+    
+    // Limpiar el texto para manejar diferentes formatos de respuesta
+    let jsonText = textContent;
+    
+    // Si el texto contiene comillas de código (```json), extraer solo el contenido JSON
+    if (jsonText.includes('```json')) {
+      jsonText = jsonText.split('```json')[1].split('```')[0].trim();
+    } else if (jsonText.includes('```')) {
+      // Si solo contiene comillas de código sin especificar el lenguaje
+      jsonText = jsonText.split('```')[1].split('```')[0].trim();
+    }
+    
+    // Intentar analizar el JSON
+    return JSON.parse(jsonText);
   } catch (error) {
     console.error("Error parsing Gemini response:", error);
     return {

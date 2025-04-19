@@ -12,6 +12,7 @@ import '../utils/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/camera_frame.dart';
 import '../widgets/capture_button.dart';
+import 'machine_analysis_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -214,6 +215,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // Método para analizar la imagen con la Edge Function
   Future<void> _analyzeImage(String imageId, String fileName) async {
     try {
+      setState(() {
+        _uploadStatus = 'Analizando imagen...';
+      });
+      
       final response = await Supabase.instance.client
           .functions
           .invoke('identify_machine', 
@@ -227,9 +232,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _machineAnalysis = response.data['analysis'];
           _uploadStatus = 'Imagen analizada correctamente';
         });
+        
+        // Navegar a la pantalla de análisis
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => MachineAnalysisScreen(
+                analysisResult: _machineAnalysis!,
+              ),
+            ),
+          );
+        }
       } else {
         setState(() {
-          _uploadStatus = 'Error al analizar la imagen: ${response.error?.message}';
+          _uploadStatus = 'Error al analizar la imagen: Código ${response.status}';
         });
       }
     } catch (e) {
