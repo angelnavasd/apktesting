@@ -219,22 +219,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _uploadStatus = 'Analizando imagen...';
       });
       
-      final response = await Supabase.instance.client
-          .functions
-          .invoke('identify_machine', 
-            body: {
-              'image_id': imageId,
-            }
-          );
+      // Invocar la función de Supabase con el formato solicitado
+      final res = await Supabase.instance.client.functions.invoke(
+        'backend', 
+        body: {
+          'name': 'Functions',
+          'image_id': imageId
+        }
+      );
+      final data = res.data;
       
-      if (response.status == 200) {
+      if (res.status == 200) {
         setState(() {
-          _machineAnalysis = response.data['analysis'];
+          _machineAnalysis = data['analysis'];
           _uploadStatus = 'Imagen analizada correctamente';
         });
         
+        // Comentado temporalmente para ver la información en la pantalla principal
+        /*
         // Navegar a la pantalla de análisis
-        if (mounted) {
+        if (mounted && _machineAnalysis != null) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => MachineAnalysisScreen(
@@ -242,10 +246,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           );
+        } else {
+          setState(() {
+            _uploadStatus = 'Análisis recibido pero sin datos válidos';
+          });
         }
+        */
       } else {
         setState(() {
-          _uploadStatus = 'Error al analizar la imagen: Código ${response.status}';
+          _uploadStatus = 'Error al analizar la imagen: Código ${res.status}';
         });
       }
     } catch (e) {
@@ -253,6 +262,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _uploadStatus = 'Error al analizar la imagen: $e';
       });
     }
+  }
+
+  Color _getStatusColor() {
+    if (_uploadStatus == null || _uploadStatus!.isEmpty) return Colors.grey;
+    if (_uploadStatus!.startsWith('Error')) return Colors.redAccent;
+    if (_uploadStatus!.startsWith('Subido correctamente')) return Colors.green;
+    return Colors.blueAccent;
   }
 
   @override
@@ -331,15 +347,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text('Archivo capturado:', style: TextStyle(fontWeight: FontWeight.bold)),
                 Text('Nombre: ${_capturedFileName ?? "-"}'),
                 Text('Tamaño: ${_capturedFileSize != null ? _capturedFileSize.toString() + ' bytes' : "-"}'),
-                Text('Estado: ${_uploadStatus ?? "-"}'),
+                
+                // Estado de la operación con formato mejorado
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Estado: ${_uploadStatus ?? "-"}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
                 
                 // Mostrar análisis de la máquina si está disponible
                 if (_machineAnalysis != null) ...[
                   SizedBox(height: 10),
                   Text('Máquina identificada:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('Nombre: ${_machineAnalysis!['machine_name'] ?? "Desconocido"}'),
-                  Text('Músculos principales: ${_machineAnalysis!['primary_muscles']?.join(", ") ?? "-"}'),
-                  Text('Músculos secundarios: ${_machineAnalysis!['secondary_muscles']?.join(", ") ?? "-"}'),
+                  Text('Nombre: ${_machineAnalysis!['nombre_de_la_máquina'] ?? "Desconocido"}'),
+                  Text('Músculos principales: ${_machineAnalysis!['músculos_principales']?.join(", ") ?? "-"}'),
+                  Text('Músculos secundarios: ${_machineAnalysis!['músculos_secundarios']?.join(", ") ?? "-"}'),
+                  Text('Instrucciones: ${_machineAnalysis!['instrucciones_básicas_de_uso'] ?? "-"}'),
                 ],
               ],
             ),
