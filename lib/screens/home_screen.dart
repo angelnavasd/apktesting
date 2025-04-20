@@ -235,8 +235,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _uploadStatus = 'Imagen analizada correctamente';
         });
         
-        // Comentado temporalmente para ver la información en la pantalla principal
-        /*
         // Navegar a la pantalla de análisis
         if (mounted && _machineAnalysis != null) {
           Navigator.of(context).push(
@@ -246,12 +244,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           );
-        } else {
-          setState(() {
-            _uploadStatus = 'Análisis recibido pero sin datos válidos';
-          });
         }
-        */
       } else {
         setState(() {
           _uploadStatus = 'Error al analizar la imagen: Código ${res.status}';
