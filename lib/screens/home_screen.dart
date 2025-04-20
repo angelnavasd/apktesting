@@ -181,9 +181,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         // Llamar a la Edge Function para analizar la imagen
         await _analyzeImage(imageId, fileName);
         
-        setState(() {
-          _uploadStatus = 'Subido correctamente: $fullPath';
-        });
         return; // Éxito, salir del bucle
       } catch (e) {
         _retryCount++;
@@ -219,7 +216,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _uploadStatus = 'Analizando imagen...';
       });
       
-      // Invocar la función de Supabase con el formato solicitado
       final res = await Supabase.instance.client.functions.invoke(
         'backend', 
         body: {
@@ -230,30 +226,62 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       final data = res.data;
       
       if (res.status == 200) {
+        // Actualizar el estado ANTES de navegar para limpiar el loader y habilitar el botón
         setState(() {
           _machineAnalysis = data['analysis'];
-          _uploadStatus = 'Imagen analizada correctamente';
+          _uploadStatus = null;
+          _capturedFileName = null;
+          _capturedFileSize = null;
+          _retryCount = 0;
         });
         
-        // Navegar a la pantalla de análisis
+        // Navegar a la pantalla de análisis y esperar el resultado
         if (mounted && _machineAnalysis != null) {
-          Navigator.of(context).push(
+          final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder: (context) => MachineAnalysisScreen(
                 analysisResult: _machineAnalysis!,
               ),
             ),
           );
+          
+          // Al volver de la pantalla de análisis, siempre limpiar el estado
+          if (mounted) {
+            setState(() {
+              // Forzar un rebuild completo y establecer todo a null
+              _uploadStatus = null;
+              _capturedFileName = null;
+              _capturedFileSize = null;
+              _retryCount = 0;
+              _machineAnalysis = null;
+            });
+          }
         }
       } else {
         setState(() {
           _uploadStatus = 'Error al analizar la imagen: Código ${res.status}';
         });
+        
+        // Después de un error, esperar 3 segundos y limpiar el estado
+        await Future.delayed(const Duration(seconds: 3));
+        if (mounted) {
+          setState(() {
+            _uploadStatus = null;
+          });
+        }
       }
     } catch (e) {
       setState(() {
         _uploadStatus = 'Error al analizar la imagen: $e';
       });
+      
+      // Después de un error, esperar 3 segundos y limpiar el estado
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted) {
+        setState(() {
+          _uploadStatus = null;
+        });
+      }
     }
   }
 
@@ -267,51 +295,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightColor,
-      // AppBar con diseño moderno
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true, // Permite que el cuerpo se extienda detrás del AppBar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppLogo(size: 36.r, showText: false),
-            SizedBox(width: 8.w),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Gym',
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'Scan',
-                    style: TextStyle(
-                      color: AppTheme.accentColor,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
+        title: AppLogo(size: 30.h, showText: false),
         actions: [
+          // Botón de info comentado para producción
+          /*
           IconButton(
-            icon: Icon(Icons.info_outline, color: AppTheme.primaryColor),
+            icon: FaIcon(FontAwesomeIcons.circleInfo, size: 20.r),
             onPressed: () {
-              // Mostrar información de la app
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text('Acerca de GymScan'),
-                  content: Text('GymScan te ayuda a identificar qué músculos trabajas con cada equipo de gimnasio.'),
+                  title: Text('Debug'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Modal de debug para uso futuro
+                      Text('// Espacio para información de debug'),
+                    ],
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -322,87 +329,63 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               );
             },
           ),
+          */
         ],
       ),
       
-      body: Column(
+      // El cuerpo ahora es simplemente el visor de la cámara a pantalla completa
+      body: Stack(
         children: [
-          SizedBox(height: 16),
-          Expanded(
+          // Visor de cámara a pantalla completa
+          SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
             child: _buildCameraPreview(),
           ),
-          // DEBUG: Mostrar info del archivo capturado/subido
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Archivo capturado:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Nombre: ${_capturedFileName ?? "-"}'),
-                Text('Tamaño: ${_capturedFileSize != null ? _capturedFileSize.toString() + ' bytes' : "-"}'),
-                
-                // Estado de la operación con formato mejorado
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  margin: EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Estado: ${_uploadStatus ?? "-"}',
-                    style: TextStyle(
+          
+          // Loader centrado (solo visible durante el proceso de análisis, NO cuando está completo)
+          if (_uploadStatus != null)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LoadingAnimationWidget.staggeredDotsWave(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      size: 50,
                     ),
-                  ),
+                    SizedBox(height: 20.h),
+                    Text(
+                      'Analizando',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                
-                // Mostrar análisis de la máquina si está disponible
-                if (_machineAnalysis != null) ...[
-                  SizedBox(height: 10),
-                  Text('Máquina identificada:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('Nombre: ${_machineAnalysis!['nombre_de_la_máquina'] ?? "Desconocido"}'),
-                  Text('Músculos principales: ${_machineAnalysis!['músculos_principales']?.join(", ") ?? "-"}'),
-                  Text('Músculos secundarios: ${_machineAnalysis!['músculos_secundarios']?.join(", ") ?? "-"}'),
-                  Text('Instrucciones: ${_machineAnalysis!['instrucciones_básicas_de_uso'] ?? "-"}'),
-                ],
-              ],
+              ),
+            ),
+            
+          // Botón de captura flotante en la parte inferior
+          Positioned(
+            bottom: 40.h,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: CaptureButton(
+                onPressed: (_isCameraInitialized && _uploadStatus == null) 
+                  ? _captureImage 
+                  : null,
+                isEnabled: _isCameraInitialized && _uploadStatus == null,
+              ),
             ),
           ),
-          // Espacio expandible para empujar la barra inferior hacia abajo
-          const Spacer(),
         ],
-      ),
-      
-      // Barra inferior con el botón de captura
-      bottomNavigationBar: Container(
-        height: 100.h,
-        padding: EdgeInsets.symmetric(vertical: 16.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CaptureButton(
-              onPressed: _isCameraInitialized ? _captureImage : null,
-              isEnabled: _isCameraInitialized,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -460,15 +443,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Vista previa de la cámara
-        CameraPreview(_cameraController!),
+        // Vista previa de la cámara con modo cover para mantener la proporción
+        ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.center,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: 1,
+                height: 1 / _cameraController!.value.aspectRatio,
+                child: CameraPreview(_cameraController!),
+              ),
+            ),
+          ),
+        ),
         
         // Animación de escaneo
         AnimatedBuilder(
           animation: _scanAnimation,
           builder: (context, child) {
             return Positioned(
-              top: _scanAnimation.value * 300.h - 2.h,
+              top: _scanAnimation.value * MediaQuery.of(context).size.height * 0.7 - 2.h,
               left: 0,
               right: 0,
               child: Container(

@@ -73,7 +73,8 @@ class MachineAnalysisScreen extends StatelessWidget {
             SizedBox(height: 24.h),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                // Devolver true para indicar que se debe limpiar el estado
+                Navigator.of(context).pop(true);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accentColor,
