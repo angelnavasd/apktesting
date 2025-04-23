@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String? _uploadStatus;
   int _retryCount = 0;
   Map<String, dynamic>? _machineAnalysis;
-
+  
   @override
   void initState() {
     super.initState();
@@ -80,9 +80,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         cameras[0],
         ResolutionPreset.medium,
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
+      // Configurar opciones de la cámara
       await _cameraController!.initialize();
+      
+      // Desactivar el flash
+      await _cameraController!.setFlashMode(FlashMode.off);
       
       setState(() {
         _isCameraInitialized = true;
@@ -439,50 +444,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       );
     }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Vista previa de la cámara con modo cover para mantener la proporción
-        ClipRect(
-          child: OverflowBox(
-            alignment: Alignment.center,
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: 1,
-                height: 1 / _cameraController!.value.aspectRatio,
-                child: CameraPreview(_cameraController!),
-              ),
-            ),
+    
+    // Vista previa de la cámara a pantalla completa
+    return Container(
+      color: Colors.black,
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: _cameraController!.value.previewSize!.height,
+            height: _cameraController!.value.previewSize!.width,
+            child: CameraPreview(_cameraController!),
           ),
         ),
-        
-        // Animación de escaneo
-        AnimatedBuilder(
-          animation: _scanAnimation,
-          builder: (context, child) {
-            return Positioned(
-              top: _scanAnimation.value * MediaQuery.of(context).size.height * 0.7 - 2.h,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 2.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      AppTheme.secondaryColor.withOpacity(0.8),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
+      ),
     );
   }
 }
