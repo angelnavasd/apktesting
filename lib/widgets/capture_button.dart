@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../utils/app_theme.dart';
+import '../utils/app_localizations.dart';
 
 class CaptureButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -53,7 +54,7 @@ class CaptureButton extends StatelessWidget {
             
             // Text
             Text(
-              'Capturar',
+              AppLocalizations.of(context)!.capture,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,

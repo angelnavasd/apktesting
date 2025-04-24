@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:glassmorphism/glassmorphism.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'dart:typed_data';
+
 import '../utils/app_theme.dart';
+import '../utils/app_localizations.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/camera_frame.dart';
 import '../widgets/capture_button.dart';
@@ -116,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       setState(() {
         _capturedFileName = null;
         _capturedFileSize = null;
-        _uploadStatus = 'Capturando...';
+        _uploadStatus = AppLocalizations.of(context).get('capturing');
         _retryCount = 0;
       });
 
@@ -128,14 +130,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       setState(() {
         _capturedFileName = safeFileName;
         _capturedFileSize = bytes.length;
-        _uploadStatus = 'Subiendo...';
+        _uploadStatus = AppLocalizations.of(context).get('uploadingImage');
       });
       
       // Intentar subir con reintentos
       await _uploadWithRetry(safeFileName, bytes);
     } catch (e) {
       setState(() {
-        _uploadStatus = 'Error capturando imagen: $e';
+        _uploadStatus = '${AppLocalizations.of(context).get('errorCapturing')}: $e';
       });
     }
   }
@@ -151,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         bool hasConnection = await _checkInternetConnection();
         if (!hasConnection) {
           setState(() {
-            _uploadStatus = 'Sin conexión a Internet. Reintentando (${_retryCount + 1}/$maxRetries)...';
+            _uploadStatus = '${AppLocalizations.of(context).get('noInternet')}. Reintentando (${_retryCount + 1}/$maxRetries)...';
           });
           await Future.delayed(Duration(seconds: 2));
           _retryCount++;
@@ -159,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         }
         
         setState(() {
-          _uploadStatus = 'Subiendo... Intento ${_retryCount + 1}/$maxRetries';
+          _uploadStatus = '${AppLocalizations.of(context).get('uploading')}. Intento ${_retryCount + 1}/$maxRetries';
         });
         
         final String fullPath = await Supabase.instance.client.storage
@@ -180,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final String imageId = response['id'];
         
         setState(() {
-          _uploadStatus = 'Subido correctamente. Analizando imagen...';
+          _uploadStatus = '${AppLocalizations.of(context).get('uploadedCorrectly')}. Analizando imagen...';
         });
         
         // Llamar a la Edge Function para analizar la imagen
@@ -191,11 +193,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _retryCount++;
         if (_retryCount >= maxRetries) {
           setState(() {
-            _uploadStatus = 'Error después de $maxRetries intentos: $e';
+            _uploadStatus = '${AppLocalizations.of(context).get('errorAfterRetries')}: $e';
           });
         } else {
           setState(() {
-            _uploadStatus = 'Error subiendo imagen. Reintentando (${_retryCount}/$maxRetries): $e';
+            _uploadStatus = '${AppLocalizations.of(context).get('errorUploading')}. Reintentando (${_retryCount}/$maxRetries): $e';
           });
           await Future.delayed(Duration(seconds: 2)); // Esperar antes de reintentar
         }
@@ -218,14 +220,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Future<void> _analyzeImage(String imageId, String fileName) async {
     try {
       setState(() {
-        _uploadStatus = 'Analizando imagen...';
+        _uploadStatus = '${AppLocalizations.of(context).get('analyzing')}.';
       });
-      
+      final currentLanguage = Localizations.localeOf(context).languageCode;
       final res = await Supabase.instance.client.functions.invoke(
         'backend', 
         body: {
           'name': 'Functions',
-          'image_id': imageId
+          'image_id': imageId,
+          'language': currentLanguage, // Enviar el idioma detectado
         }
       );
       final data = res.data;
@@ -264,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         }
       } else {
         setState(() {
-          _uploadStatus = 'Error al analizar la imagen: Código ${res.status}';
+          _uploadStatus = '${AppLocalizations.of(context).get('errorAnalyzing')}: Código ${res.status}';
         });
         
         // Después de un error, esperar 3 segundos y limpiar el estado
@@ -277,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       }
     } catch (e) {
       setState(() {
-        _uploadStatus = 'Error al analizar la imagen: $e';
+        _uploadStatus = '${AppLocalizations.of(context).get('errorAnalyzing')}: $e';
       });
       
       // Después de un error, esperar 3 segundos y limpiar el estado
@@ -292,8 +295,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Color _getStatusColor() {
     if (_uploadStatus == null || _uploadStatus!.isEmpty) return Colors.grey;
-    if (_uploadStatus!.startsWith('Error')) return Colors.redAccent;
-    if (_uploadStatus!.startsWith('Subido correctamente')) return Colors.green;
+    if (_uploadStatus!.startsWith('${AppLocalizations.of(context).get('error')}')) return Colors.redAccent;
+    if (_uploadStatus!.startsWith('${AppLocalizations.of(context).get('uploadedCorrectly')}')) return Colors.green;
     return Colors.blueAccent;
   }
 
@@ -364,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                     SizedBox(height: 20.h),
                     Text(
-                      'Analizando',
+                      AppLocalizations.of(context)!.analyzing,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16.sp,
@@ -408,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
             SizedBox(height: 16.h),
             Text(
-              'Se requiere permiso para la cámara',
+              AppLocalizations.of(context)!.cameraPermissionRequired,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontSize: 14.sp,
@@ -429,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   vertical: 8.h,
                 ),
               ),
-              child: Text('Conceder permiso'),
+              child: Text(AppLocalizations.of(context)!.grantPermission),
             ),
           ],
         ),

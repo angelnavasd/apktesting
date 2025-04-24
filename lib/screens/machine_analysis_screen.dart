@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
+import '../utils/app_localizations.dart';
 
 class MachineAnalysisScreen extends StatelessWidget {
   final Map<String, dynamic> analysisResult;
@@ -37,7 +38,7 @@ class MachineAnalysisScreen extends StatelessWidget {
                         
                         // Nombre de la máquina
                         _buildInfoSection(
-                          title: 'Nombre de la máquina',
+                          title: AppLocalizations.of(context)!.machineName,
                           content: '${analysisResult['nombre_de_la_máquina']}',
                           icon: FontAwesomeIcons.dumbbell,
                         ),
@@ -51,7 +52,7 @@ class MachineAnalysisScreen extends StatelessWidget {
                           
                           // Músculos principales
                           _buildInfoSection(
-                            title: 'Músculos principales',
+                            title: AppLocalizations.of(context)!.mainMuscles,
                             content: _formatListContent(analysisResult['músculos_principales']),
                             icon: FontAwesomeIcons.personRunning,
                             iconColor: AppTheme.accentColor,
@@ -59,7 +60,7 @@ class MachineAnalysisScreen extends StatelessWidget {
                           
                           // Músculos secundarios
                           _buildInfoSection(
-                            title: 'Músculos secundarios',
+                            title: AppLocalizations.of(context)!.secondaryMuscles,
                             content: _formatListContent(analysisResult['músculos_secundarios']),
                             icon: FontAwesomeIcons.personWalking,
                             iconColor: AppTheme.secondaryColor,
@@ -67,7 +68,7 @@ class MachineAnalysisScreen extends StatelessWidget {
                           
                           // Instrucciones
                           _buildInfoSection(
-                            title: 'Instrucciones básicas de uso',
+                            title: AppLocalizations.of(context)!.basicInstructions,
                             content: _formatListContent(analysisResult['instrucciones_básicas_de_uso']),
                             icon: FontAwesomeIcons.listCheck,
                             iconColor: AppTheme.primaryColor,
@@ -145,7 +146,7 @@ class MachineAnalysisScreen extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
           Text(
-            'Análisis de máquina',
+            AppLocalizations.of(context)!.machineAnalysis,
             style: TextStyle(
               fontSize: 28.sp,
               fontWeight: FontWeight.bold,
@@ -156,7 +157,7 @@ class MachineAnalysisScreen extends StatelessWidget {
           Container(
             width: 250.w,
             child: Text(
-              'Información detallada sobre la máquina y su uso correcto',
+              AppLocalizations.of(context)!.detailedMachineInfo,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.sp,
@@ -292,7 +293,7 @@ class MachineAnalysisScreen extends StatelessWidget {
               SizedBox(width: 12.w),
               // Texto
               Text(
-                'Volver',
+                AppLocalizations.of(context)!.back,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18.sp,

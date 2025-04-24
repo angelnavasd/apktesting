@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
+import 'utils/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +47,19 @@ class MyApp extends StatelessWidget {
           title: 'GymScan',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          
+          // Configuración de internacionalización
+          localizationsDelegates: const [
+            AppLocalizations.delegate, // Delegado de localización personalizado
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('es'), // Español
+            Locale('en'), // Inglés
+          ],
+          
           home: const SplashScreen(),
         );
       },

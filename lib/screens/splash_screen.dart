@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:async';
 import '../utils/app_theme.dart';
+import '../utils/app_localizations.dart';
 import '../widgets/app_logo.dart';
 import 'home_screen.dart';
 
@@ -65,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 
                 // Texto de eslogan
                 Text(
-                  'Identifica los músculos que trabajas',
+                  AppLocalizations.of(context).get('identify_muscles'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     color: AppTheme.greyColor,
@@ -84,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 
                 // Texto de carga
                 Text(
-                  'Preparando cámara...',
+                  AppLocalizations.of(context).get('loading_camera'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppTheme.greyColor.withOpacity(0.7),
