@@ -5,7 +5,7 @@
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
     <application
-        android:label="My Gym Buddy"
+        android:label="GymScan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
