@@ -397,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 : const Center(
                     child: SizedBox(
                       height: 50,
-                      child: Text('Cargando anuncio...', 
+                      child: Text('', 
                         style: TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ),
@@ -516,7 +516,7 @@ class _InfoDialog extends StatefulWidget {
 }
 
 class _InfoDialogState extends State<_InfoDialog> {
-  int _step = 0; // 0: botones, 1: texto1, 2: texto2
+  int _step = 0; // 0: botones, 1: Politicas, 2: Terminos
 
   Widget _buildArrowButton({required String text, required VoidCallback onTap}) {
     return Padding(
@@ -552,45 +552,115 @@ class _InfoDialogState extends State<_InfoDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 350),
-          child: _step == 0
-              ? Column(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        child: _step == 0
+            ? Container(
+                width: 340,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildArrowButton(
-                      text: 'Politicas y privacidad',
-                      onTap: () => setState(() => _step = 1),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black, size: 28),
+                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: loc.locale.languageCode == 'es' ? 'Cerrar' : 'Close',
+                        ),
+                      ],
                     ),
-                    _buildArrowButton(
-                      text: 'Terminos y condiciones',
-                      onTap: () => setState(() => _step = 2),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildArrowButton(
+                            text: loc.locale.languageCode == 'es' ? 'Políticas y privacidad' : 'Privacy Policy',
+                            onTap: () => setState(() => _step = 1),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildArrowButton(
+                            text: loc.locale.languageCode == 'es' ? 'Términos y condiciones' : 'Terms and Conditions',
+                            onTap: () => setState(() => _step = 2),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
+                ),
+              )
+            : Container(
+                width: 440,
+                height: 620,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
-                    Text(
-                      'HOLA',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              _step == 1 ? loc.infoDialog_privacyTitle : loc.infoDialog_termsTitle,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              textAlign: TextAlign.left,
+                              softWrap: true,
+                              overflow: TextOverflow.visible,
+                              maxLines: null,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black, size: 28),
+                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: loc.locale.languageCode == 'es' ? 'Cerrar' : 'Close',
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            child: SelectableText(
+                              _step == 1 ? loc.infoDialog_privacyText : loc.infoDialog_termsText,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -603,15 +673,15 @@ class _InfoDialogState extends State<_InfoDialog> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
-                          'Volver',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        child: Text(
+                          loc.locale.languageCode == 'es' ? 'Volver' : 'Back',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                   ],
                 ),
-        ),
+              ),
       ),
     );
   }
