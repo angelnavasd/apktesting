@@ -533,15 +533,22 @@ class _InfoDialogState extends State<_InfoDialog> {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
+              Expanded(
+                child: Text(
+                  text,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.left,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
+              const SizedBox(width: 12),
               const Icon(Icons.arrow_forward, size: 28, color: Colors.black),
             ],
           ),
@@ -581,23 +588,13 @@ class _InfoDialogState extends State<_InfoDialog> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: _buildArrowButton(
-                            text: loc.locale.languageCode == 'es' ? 'Políticas y privacidad' : 'Privacy Policy',
-                            onTap: () => setState(() => _step = 1),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildArrowButton(
-                            text: loc.locale.languageCode == 'es' ? 'Términos y condiciones' : 'Terms and Conditions',
-                            onTap: () => setState(() => _step = 2),
-                          ),
-                        ),
-                      ],
+                    _buildArrowButton(
+                      text: loc.locale.languageCode == 'es' ? 'Políticas y privacidad' : 'Privacy Policy',
+                      onTap: () => setState(() => _step = 1),
+                    ),
+                    _buildArrowButton(
+                      text: loc.locale.languageCode == 'es' ? 'Términos y condiciones' : 'Terms and Conditions',
+                      onTap: () => setState(() => _step = 2),
                     ),
                   ],
                 ),

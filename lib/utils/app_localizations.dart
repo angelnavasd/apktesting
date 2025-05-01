@@ -64,7 +64,7 @@ class AppLocalizations {
       'infoDialog_privacyTitle': 'Privacy Policy',
       'infoDialog_privacyText': '''Privacy Policy – GymScan
 Last updated: April 2025
-Responsible: [Your name or your company]
+Responsible: GymScan
 
 This Privacy Policy describes how the GymScan app collects, uses, and protects personal information you may provide when using the app. GymScan is committed to protecting the privacy of its users.
 
