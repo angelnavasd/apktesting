@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
 import 'utils/app_localizations.dart';
+import 'utils/ad_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,11 @@ void main() async {
     url: 'https://clmrkqhvpyqcpghqhlbg.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsbXJrcWh2cHlxY3BnaHFobGJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwMDA3MjEsImV4cCI6MjA2MDU3NjcyMX0.RDt0SZ9f_3fFFN2q6tjJJq0LV7nGEGmJVi3uHK_CXqg',
   );
+  
+  await MobileAds.instance.initialize();
+  
+  // Precargar un anuncio intersticial
+  await AdManager.preloadInterstitialAd();
   
   runApp(const MyApp());
 }

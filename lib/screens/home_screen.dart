@@ -6,11 +6,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:glassmorphism/glassmorphism.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
 import '../utils/app_theme.dart';
 import '../utils/app_localizations.dart';
+import '../utils/ad_manager.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/camera_frame.dart';
 import '../widgets/capture_button.dart';
@@ -30,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   bool _isCameraInitialized = false;
   late AnimationController _scanAnimationController;
   late Animation<double> _scanAnimation;
-
+  BannerAd? _bannerAd;
+  
   // Variables de estado para debug visual
   String? _capturedFileName;
   int? _capturedFileSize;
@@ -55,6 +58,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         curve: Curves.easeInOut,
       ),
     );
+    
+    _loadBannerAd();
   }
 
   Future<void> _requestCameraPermission() async {
@@ -106,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void dispose() {
     _cameraController?.dispose();
     _scanAnimationController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -393,6 +399,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: _bannerAd != null ? _bannerAd!.size.height.toDouble() : 50,
+              color: Colors.transparent,
+              child: _bannerAd != null 
+                ? AdWidget(ad: _bannerAd!) 
+                : const Center(
+                    child: SizedBox(
+                      height: 50,
+                      child: Text('Cargando anuncio...', 
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                  ),
+            ),
+          ),
         ],
       ),
     );
@@ -462,5 +487,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       ),
     );
+  }
+
+  void _loadBannerAd() {
+    debugPrint('Intentando cargar banner ad con ID: ${AdManager.bannerAdUnitId}');
+    
+    _bannerAd = BannerAd(
+      adUnitId: AdManager.bannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('Banner ad cargado exitosamente');
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('Error al cargar banner ad: ${error.message}, código: ${error.code}');
+          ad.dispose();
+          _bannerAd = null;
+          
+          // Reintentar cargar el anuncio después de un tiempo
+          Future.delayed(const Duration(minutes: 1), () {
+            if (mounted) {
+              _loadBannerAd();
+            }
+          });
+        },
+        onAdOpened: (ad) => debugPrint('Banner ad abierto'),
+        onAdClosed: (ad) => debugPrint('Banner ad cerrado'),
+        onAdImpression: (ad) => debugPrint('Banner ad impresión registrada'),
+      ),
+    );
+    _bannerAd!.load();
   }
 }

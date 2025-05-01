@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../utils/app_localizations.dart';
+import '../utils/ad_manager.dart';
 
 class MachineAnalysisScreen extends StatelessWidget {
   final Map<String, dynamic> analysisResult;
@@ -97,7 +99,10 @@ class MachineAnalysisScreen extends StatelessWidget {
               top: 16.h,
               left: 16.w,
               child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(true),
+                onTap: () async {
+                  await AdManager.showInterstitialAd();
+                  Navigator.of(context).pop(true);
+                },
                 child: Container(
                   padding: EdgeInsets.all(12.r),
                   decoration: BoxDecoration(
@@ -259,7 +264,10 @@ class MachineAnalysisScreen extends StatelessWidget {
         ],
       ),
       child: GestureDetector(
-        onTap: () => Navigator.of(context).pop(true),
+        onTap: () async {
+          await AdManager.showInterstitialAd();
+          Navigator.of(context).pop(true);
+        },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
           decoration: BoxDecoration(

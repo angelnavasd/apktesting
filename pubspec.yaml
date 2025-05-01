@@ -60,6 +60,9 @@ dependencies:
   
   # Para animaciones de carga
   loading_animation_widget: ^1.2.0+4
+  
+  # Para AdMob
+  google_mobile_ads: ^4.0.0
 
 dev_dependencies:
   flutter_test:
