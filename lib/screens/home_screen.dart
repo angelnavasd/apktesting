@@ -316,34 +316,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         elevation: 0,
         title: AppLogo(size: 30.h, showText: false),
         actions: [
-          // Botón de info comentado para producción
-          /*
           IconButton(
-            icon: FaIcon(FontAwesomeIcons.circleInfo, size: 20.r),
+            icon: FaIcon(FontAwesomeIcons.circleInfo, size: 24.r, color: Colors.white),
+            tooltip: 'Info',
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Debug'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Modal de debug para uso futuro
-                      Text('// Espacio para información de debug'),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cerrar'),
-                    ),
-                  ],
+                barrierDismissible: true,
+                builder: (context) => Dialog(
+                  backgroundColor: Colors.transparent,
+                  child: _InfoDialog(),
                 ),
               );
             },
           ),
-          */
         ],
       ),
       
@@ -521,5 +507,112 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
     _bannerAd!.load();
+  }
+}
+
+class _InfoDialog extends StatefulWidget {
+  @override
+  State<_InfoDialog> createState() => _InfoDialogState();
+}
+
+class _InfoDialogState extends State<_InfoDialog> {
+  int _step = 0; // 0: botones, 1: texto1, 2: texto2
+
+  Widget _buildArrowButton({required String text, required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black, width: 2),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black,
+                ),
+              ),
+              const Icon(Icons.arrow_forward, size: 28, color: Colors.black),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 350),
+          child: _step == 0
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildArrowButton(
+                      text: 'Politicas y privacidad',
+                      onTap: () => setState(() => _step = 1),
+                    ),
+                    _buildArrowButton(
+                      text: 'Terminos y condiciones',
+                      onTap: () => setState(() => _step = 2),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 24),
+                    Text(
+                      'HOLA',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => setState(() => _step = 0),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Volver',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
   }
 }

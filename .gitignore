@@ -50,3 +50,6 @@ app.*.map.json
 !.env.example
 /supabase/functions/**/.env
 /supabase/functions/**/env
+
+#keystore
+key.properties

@@ -7,16 +7,51 @@ import '../utils/app_theme.dart';
 import '../utils/app_localizations.dart';
 import '../utils/ad_manager.dart';
 
-class MachineAnalysisScreen extends StatelessWidget {
+class MachineAnalysisScreen extends StatefulWidget {
   final Map<String, dynamic> analysisResult;
 
   const MachineAnalysisScreen({
-    Key? key, 
+    Key? key,
     required this.analysisResult,
   }) : super(key: key);
 
   @override
+  State<MachineAnalysisScreen> createState() => _MachineAnalysisScreenState();
+}
+
+class _MachineAnalysisScreenState extends State<MachineAnalysisScreen> {
+  bool _adShown = false;
+  bool _showLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _showInterstitialAd();
+  }
+
+  Future<void> _showInterstitialAd() async {
+    await AdManager.showInterstitialAd();
+    if (mounted) {
+      setState(() {
+        _adShown = true;
+        _showLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_adShown || _showLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -41,21 +76,21 @@ class MachineAnalysisScreen extends StatelessWidget {
                         // Nombre de la máquina
                         _buildInfoSection(
                           title: AppLocalizations.of(context)!.machineName,
-                          content: '${analysisResult['nombre_de_la_máquina']}',
+                          content: '${widget.analysisResult['nombre_de_la_máquina']}',
                           icon: FontAwesomeIcons.dumbbell,
                         ),
                         
-                        if(analysisResult['músculos_principales'] != null 
-                        && analysisResult['músculos_principales'].length > 0
-                        && analysisResult['músculos_secundarios'] != null 
-                        && analysisResult['músculos_secundarios'].length > 0
-                        && analysisResult['instrucciones_básicas_de_uso'] != null
-                        && analysisResult['instrucciones_básicas_de_uso'].length > 0) ...[
+                        if(widget.analysisResult['músculos_principales'] != null 
+                        && widget.analysisResult['músculos_principales'].length > 0
+                        && widget.analysisResult['músculos_secundarios'] != null 
+                        && widget.analysisResult['músculos_secundarios'].length > 0
+                        && widget.analysisResult['instrucciones_básicas_de_uso'] != null
+                        && widget.analysisResult['instrucciones_básicas_de_uso'].length > 0) ...[
                           
                           // Músculos principales
                           _buildInfoSection(
                             title: AppLocalizations.of(context)!.mainMuscles,
-                            content: _formatListContent(analysisResult['músculos_principales']),
+                            content: _formatListContent(widget.analysisResult['músculos_principales']),
                             icon: FontAwesomeIcons.personRunning,
                             iconColor: AppTheme.accentColor,
                           ),
@@ -63,7 +98,7 @@ class MachineAnalysisScreen extends StatelessWidget {
                           // Músculos secundarios
                           _buildInfoSection(
                             title: AppLocalizations.of(context)!.secondaryMuscles,
-                            content: _formatListContent(analysisResult['músculos_secundarios']),
+                            content: _formatListContent(widget.analysisResult['músculos_secundarios']),
                             icon: FontAwesomeIcons.personWalking,
                             iconColor: AppTheme.secondaryColor,
                           ),
@@ -71,9 +106,14 @@ class MachineAnalysisScreen extends StatelessWidget {
                           // Instrucciones
                           _buildInfoSection(
                             title: AppLocalizations.of(context)!.basicInstructions,
-                            content: _formatListContent(analysisResult['instrucciones_básicas_de_uso']),
+                            content: _formatListContent(widget.analysisResult['instrucciones_básicas_de_uso']),
                             icon: FontAwesomeIcons.listCheck,
                             iconColor: AppTheme.primaryColor,
+                          ),
+                          
+                          Padding(
+                            padding: EdgeInsets.only(top: 20.h),
+                            child: _ResultBannerAd(),
                           ),
                         ],
                         
@@ -316,16 +356,65 @@ class MachineAnalysisScreen extends StatelessWidget {
     );
   }
   
-  // Método para formatear el contenido de listas eliminando los corchetes
   String _formatListContent(dynamic content) {
     if (content == null) return '';
     
     String contentStr = content.toString();
-    // Eliminar los corchetes al inicio y al final si existen
     if (contentStr.startsWith('[') && contentStr.endsWith(']')) {
       contentStr = contentStr.substring(1, contentStr.length - 1);
     }
     return contentStr;
+  }
+}
+
+class _ResultBannerAd extends StatefulWidget {
+  @override
+  State<_ResultBannerAd> createState() => _ResultBannerAdState();
+}
+
+class _ResultBannerAdState extends State<_ResultBannerAd> {
+  BannerAd? _bannerAd;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bannerAd = BannerAd(
+      adUnitId: AdManager.bannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _loaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          setState(() {
+            _loaded = false;
+          });
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded || _bannerAd == null) {
+      return SizedBox(height: 0);
+    }
+    return SizedBox(
+      height: _bannerAd!.size.height.toDouble(),
+      width: _bannerAd!.size.width.toDouble(),
+      child: AdWidget(ad: _bannerAd!),
+    );
   }
 }
 
