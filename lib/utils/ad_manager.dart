@@ -4,46 +4,57 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdManager {
   static String get bannerAdUnitId {
-    // Usar IDs de prueba solo para desarrollo (debug mode)
     if (kDebugMode) {
       if (Platform.isAndroid) {
-        return 'ca-app-pub-3940256099942544/6300978111'; // ID de prueba para Android
+        return 'ca-app-pub-3940256099942544/6300978111'; 
       } else if (Platform.isIOS) {
-        return 'ca-app-pub-3940256099942544/2934735716'; // ID de prueba para iOS
+        return 'ca-app-pub-3940256099942544/2934735716'; 
       }
     } else {
-      // IDs reales para producción (release mode)
       if (Platform.isAndroid) {
-        return 'ca-app-pub-7069024149133209/7168631273'; // ID real del banner
+        return 'ca-app-pub-7069024149133209/7168631273'; 
       } else if (Platform.isIOS) {
-        return 'ca-app-pub-7069024149133209/7168631273'; // Usando el mismo ID para iOS por ahora
+        return 'ca-app-pub-7069024149133209/7168631273'; 
       }
     }
-    
     throw UnsupportedError('Plataforma no soportada');
   }
 
   static String get interstitialAdUnitId {
-    // Usar IDs de prueba solo para desarrollo (debug mode)
     if (kDebugMode) {
       if (Platform.isAndroid) {
-        return 'ca-app-pub-3940256099942544/1033173712'; // ID de prueba para Android
+        return 'ca-app-pub-3940256099942544/1033173712'; 
       } else if (Platform.isIOS) {
-        return 'ca-app-pub-3940256099942544/4411468910'; // ID de prueba para iOS
+        return 'ca-app-pub-3940256099942544/4411468910'; 
       }
     } else {
-      // IDs reales para producción (release mode)
       if (Platform.isAndroid) {
-        return 'ca-app-pub-7069024149133209/2546859980'; // ID real del intersticial
+        return 'ca-app-pub-7069024149133209/2546859980';
       } else if (Platform.isIOS) {
-        return 'ca-app-pub-7069024149133209/2546859980'; // Usando el mismo ID para iOS por ahora
+        return 'ca-app-pub-7069024149133209/2546859980'; 
       }
     }
     
     throw UnsupportedError('Plataforma no soportada');
   }
 
-  // Cargar un banner
+  static String get interstitialAdUnitId2 {
+    if (kDebugMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/1033173712';
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/4411468910'; 
+      }
+    } else {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-7069024149133209/4071662827'; 
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-7069024149133209/4071662827'; 
+      }
+    }
+    throw UnsupportedError('Plataforma no soportada');
+  }
+
   static BannerAd createBannerAd() {
     return BannerAd(
       adUnitId: bannerAdUnitId,
@@ -63,7 +74,6 @@ class AdManager {
     );
   }
 
-  // Cargar un anuncio intersticial
   static Future<InterstitialAd?> loadInterstitialAd() async {
     InterstitialAd? interstitialAd;
     
@@ -90,10 +100,8 @@ class AdManager {
     }
   }
   
-  // Variable estática para mantener una referencia al anuncio intersticial
   static InterstitialAd? _interstitialAd;
   
-  // Precargar un anuncio intersticial
   static Future<void> preloadInterstitialAd() async {
     debugPrint('Precargando anuncio intersticial con ID: $interstitialAdUnitId');
     
@@ -118,7 +126,6 @@ class AdManager {
     }
   }
   
-  // Mostrar un anuncio intersticial
   static Future<void> showInterstitialAd() async {
     debugPrint('Intentando mostrar anuncio intersticial');
     
@@ -137,13 +144,13 @@ class AdManager {
           debugPrint('Anuncio intersticial cerrado por el usuario');
           ad.dispose();
           _interstitialAd = null;
-          preloadInterstitialAd(); // Precargar el siguiente anuncio
+          preloadInterstitialAd(); 
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
           debugPrint('Error al mostrar anuncio intersticial: ${error.message}, código: ${error.code}');
           ad.dispose();
           _interstitialAd = null;
-          preloadInterstitialAd(); // Intentar precargar otro anuncio
+          preloadInterstitialAd(); 
         },
         onAdImpression: (ad) {
           debugPrint('Impresión de anuncio intersticial registrada');

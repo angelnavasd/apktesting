@@ -30,7 +30,17 @@ class _MachineAnalysisScreenState extends State<MachineAnalysisScreen> {
   }
 
   Future<void> _showInterstitialAd() async {
-    await AdManager.showInterstitialAd();
+    await InterstitialAd.load(
+      adUnitId: AdManager.interstitialAdUnitId2,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) async {
+          await ad.show();
+          ad.dispose();
+        },
+        onAdFailedToLoad: (error) {},
+      ),
+    );
     if (mounted) {
       setState(() {
         _adShown = true;
@@ -111,10 +121,7 @@ class _MachineAnalysisScreenState extends State<MachineAnalysisScreen> {
                             iconColor: AppTheme.primaryColor,
                           ),
                           
-                          Padding(
-                            padding: EdgeInsets.only(top: 20.h),
-                            child: _ResultBannerAd(),
-                          ),
+                          SizedBox(height: 20.h),
                         ],
                         
                         // Espacio para el botón fijo en la parte inferior
@@ -367,58 +374,6 @@ class _MachineAnalysisScreenState extends State<MachineAnalysisScreen> {
   }
 }
 
-class _ResultBannerAd extends StatefulWidget {
-  @override
-  State<_ResultBannerAd> createState() => _ResultBannerAdState();
-}
-
-class _ResultBannerAdState extends State<_ResultBannerAd> {
-  BannerAd? _bannerAd;
-  bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _bannerAd = BannerAd(
-      adUnitId: AdManager.bannerAdUnitId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          setState(() {
-            _loaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          setState(() {
-            _loaded = false;
-          });
-        },
-      ),
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_loaded || _bannerAd == null) {
-      return SizedBox(height: 0);
-    }
-    return SizedBox(
-      height: _bannerAd!.size.height.toDouble(),
-      width: _bannerAd!.size.width.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
-    );
-  }
-}
-
-// Painter personalizado para crear una ilustración de gráfico de barras para gimnasio
 class GymChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
