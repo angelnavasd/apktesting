@@ -51,5 +51,7 @@ app.*.map.json
 /supabase/functions/**/.env
 /supabase/functions/**/env
 
-#keystore
+#keystore keys, jks and properties
+/keys
+*.jks
 key.properties

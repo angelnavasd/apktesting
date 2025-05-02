@@ -1,4 +1,4 @@
-package com.example.mi_app_flutter
+package com.zataapps.gymscan
 
 import io.flutter.embedding.android.FlutterActivity
 
